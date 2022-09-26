@@ -1230,16 +1230,27 @@ public class LogFilterMain extends JFrame implements INotiEvent
         return resultString;
     }
 
-    void parseFile(final File file)
+    void parseFile(File file) {
+        parseFile(file, 0);
+    }
+
+    void parseFile(final File file, final int index)
     {
         if(file == null)
         {
             T.e("file == null");
             return;
         }
-
-        setTitle(file.getPath());
-        new Thread(new Runnable()
+        String title = "";
+        String indexString = "  ["+(index + 1)+"]";
+        String nowTitleString = indexString + file.getPath();;
+        if(index == 0) {
+            title = nowTitleString ;
+        }else {
+            title =  getTitle() + nowTitleString ;
+        }
+        setTitle(title);
+        executor.execute(new Runnable()
         {
             public void run()
             {
@@ -1259,8 +1270,11 @@ public class LogFilterMain extends JFrame implements INotiEvent
                     String strLine;
 
                     setStatus("Parsing");
-                    clearData();
-                    m_tbLogTable.clearSelection();
+
+                    if(index == 0) {
+                        clearData();
+                        m_tbLogTable.clearSelection();
+                    }
                     while ((strLine = br.readLine()) != null)
                     {
                         if(strLine != null && !"".equals(strLine.trim()))
@@ -1286,7 +1300,7 @@ public class LogFilterMain extends JFrame implements INotiEvent
                     T.e(e);
                 }
             }
-        }).start();
+        });
     }
 
     void pauseProcess()
@@ -1375,14 +1389,13 @@ public class LogFilterMain extends JFrame implements INotiEvent
                     event.acceptDrop(DnDConstants.ACTION_COPY);
                     Transferable t = event.getTransferable();
                     List<?> list = (List<?>)(t.getTransferData(DataFlavor.javaFileListFlavor));
-                    Iterator<?> i = list.iterator();
-                    if(i.hasNext())
-                    {
-                        File file = (File)i.next();
+                    int size = list.size();
+                    for(int i =0 ;i< size;i ++) {
+                        File file = (File) list.get(i);
                         setTitle(file.getPath());
 
                         stopProcess();
-                        parseFile(file);
+                        parseFile(file, i);
                     }
                 }
                 catch(Exception e)

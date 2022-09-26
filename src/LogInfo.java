@@ -64,4 +64,13 @@ public class LogInfo
         }
         return null;
     }
+
+	@Override
+	public String toString() {
+		return "LogInfo [m_strLine=" + m_strLine + ", m_strTime=" + m_strTime + ", m_strLogLV=" + m_strLogLV
+				+ ", m_strPid=" + m_strPid + ", m_strThread=" + m_strThread + ", m_TextColor=" + m_TextColor + "]";
+	}
+    
+    
+    
 }

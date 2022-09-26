@@ -596,6 +596,24 @@ public class LogTable extends JTable implements FocusListener, ActionListener
             return strText;
         }
     }
+    public void goToRow(int row) {
+        T.d("goToRow = " + row);
+
+        LogFilterTableModel model = ((LogFilterTableModel) getModel());
+        int realRow = 0;
+        if(model != null && model.m_arData!= null) {
+            for(int i = 0;i< model.m_arData.size();i++) {
+                LogInfo info = model.m_arData.get(i);
+                int line = Integer.valueOf(info.m_strLine);
+                if(line >= row) {
+                    T.d("goToRow find " + info);
+                    realRow = i;
+                    break;
+                }
+            }
+        }
+        showRow(realRow, true);
+    }
 
     public void showRow(int row)
     {

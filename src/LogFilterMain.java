@@ -1,3 +1,5 @@
+import toast.Toast;
+
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
@@ -177,6 +179,7 @@ public class LogFilterMain extends JFrame implements INotiEvent
 //    JTextField                  m_tfProcessCmd;
     JComboBox                 m_comboEncode;
     JComboBox                 m_jcFontType;
+    JTextField                tfGoto;
     JButton                   m_btnRun;
     JButton                   m_btnClear;
     JToggleButton             m_tbtnPause;
@@ -205,45 +208,11 @@ public class LogFilterMain extends JFrame implements INotiEvent
 
     public static void main(final String args[])
     {
-//        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
         final LogFilterMain mainFrame = new LogFilterMain();
         mainFrame.setTitle(LOGFILTER + " " + VERSION);
-//        mainFrame.addWindowListener(new WindowEventHandler());
-
-        JMenuBar menubar = new JMenuBar();
-        JMenu file = new JMenu("File");
-        file.setMnemonic(KeyEvent.VK_F);
-
-        JMenuItem fileOpen = new JMenuItem("Open");
-        fileOpen.setMnemonic(KeyEvent.VK_O);
-        fileOpen.setAccelerator( KeyStroke.getKeyStroke(KeyEvent.VK_O,
-                ActionEvent.ALT_MASK) );
-        fileOpen.setToolTipText("Open log file");
-        fileOpen.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent event) {
-                mainFrame.openFileBrowser();
-            }
-        });
-        
-        m_recentMenu = new RecentFileMenu("RecentFile",10){
-            public void onSelectFile(String filePath){
-                mainFrame.parseFile(new File(filePath));
-            }
-        };
-        
-        file.add(fileOpen);
-        file.add(m_recentMenu);
-
-        menubar.add(file);
-        mainFrame.setJMenuBar(menubar);
-        
-        if(args != null && args.length > 0)
-        {
-            EventQueue.invokeLater(new Runnable()
-            {
-                public void run()
-                {
+        if (args != null && args.length > 0) {
+            EventQueue.invokeLater(new Runnable() {
+                public void run() {
                     mainFrame.parseFile(new File(args[0]));
                 }
             });
@@ -275,13 +244,7 @@ public class LogFilterMain extends JFrame implements INotiEvent
     public LogFilterMain()
     {
         super();
-        addWindowListener(new WindowAdapter()
-        {
-            public void windowClosing(WindowEvent e)
-            {
-                exit();
-            }
-        });
+        initWindowAndMenu();
         initValue();
         createComponent();
 
@@ -310,7 +273,46 @@ public class LogFilterMain extends JFrame implements INotiEvent
             setExtendedState( m_nWindState );
         setMinimumSize(new Dimension(MIN_WIDTH, MIN_HEIGHT));
     }
-    
+
+    private void initWindowAndMenu() {
+        setTitle(LOGFILTER + " " + VERSION);
+        JMenuBar menubar = new JMenuBar();
+        JMenu file = new JMenu("File");
+        file.setMnemonic(KeyEvent.VK_F);
+
+        JMenuItem fileOpen = new JMenuItem("Open");
+        fileOpen.setMnemonic(KeyEvent.VK_O);
+        fileOpen.setAccelerator( KeyStroke.getKeyStroke(KeyEvent.VK_O,
+                ActionEvent.ALT_MASK) );
+        fileOpen.setToolTipText("Open log file");
+        fileOpen.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent event) {
+                openFileBrowser();
+            }
+        });
+
+        m_recentMenu = new RecentFileMenu("RecentFile",10){
+            public void onSelectFile(String filePath){
+                parseFile(new File(filePath));
+            }
+        };
+
+        file.add(fileOpen);
+        file.add(m_recentMenu);
+
+        menubar.add(file);
+        setJMenuBar(menubar);
+
+
+        addWindowListener(new WindowAdapter()
+        {
+            public void windowClosing(WindowEvent e)
+            {
+                exit();
+            }
+        });
+    }
+
     final String INI_FILE           = "LogFilter.ini";
     final String INI_FILE_CMD       = "LogFilterCmd.ini";
     final String INI_FILE_COLOR     = "LogFilterColor.ini";
@@ -1034,7 +1036,7 @@ public class LogFilterMain extends JFrame implements INotiEvent
         m_comboEncode.addItem("Local");
 
         JLabel jlGoto = new JLabel("Goto : ");
-        final JTextField tfGoto = new JTextField(6);
+        tfGoto = new JTextField(6);
         tfGoto.setHorizontalAlignment(SwingConstants.RIGHT);
         tfGoto.addCaretListener(new CaretListener(){
             public void caretUpdate(CaretEvent e)
@@ -1042,7 +1044,7 @@ public class LogFilterMain extends JFrame implements INotiEvent
                 try
                 {
                     int nIndex = Integer.parseInt(tfGoto.getText()) - 1;
-                    m_tbLogTable.showRow(nIndex, false);
+                    m_tbLogTable.goToRow(nIndex);
                 }
                 catch(Exception err)
                 {
@@ -2079,6 +2081,12 @@ public class LogFilterMain extends JFrame implements INotiEvent
 //            parseFile(file);
 //            m_recentMenu.addEntry( file.getAbsolutePath() );
 //        }
+    }
+
+    public void gotoLine(String strLine) {
+        int line = Integer.valueOf(strLine);
+        tfGoto.setText(strLine);
+        Toast.showToast(LogFilterMain.this, C, "…Ë÷√–– ˝" + line);
     }
 }
 

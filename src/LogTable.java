@@ -112,10 +112,10 @@ public class LogTable extends JTable implements FocusListener, ActionListener
             {
                 Point p = e.getPoint();
                 int row = rowAtPoint( p );
+                LogInfo logInfo = ((LogFilterTableModel)getModel()).getRow(row);
                 if ( SwingUtilities.isLeftMouseButton( e ) )
                 {
                     if (e.getClickCount() == 2){
-                        LogInfo logInfo = ((LogFilterTableModel)getModel()).getRow(row);
                         logInfo.m_bMarked = !logInfo.m_bMarked;
                         m_LogFilterMain.bookmarkItem(row, Integer.parseInt(logInfo.m_strLine) - 1, logInfo.m_bMarked);
                      }
@@ -124,7 +124,6 @@ public class LogTable extends JTable implements FocusListener, ActionListener
                         int colum = columnAtPoint(p);
                         if(colum == LogFilterTableModel.COMUMN_TAG)
                         {
-                            LogInfo logInfo = ((LogFilterTableModel)getModel()).getRow(row);
                             if(m_strTagShow.contains("|" + (String)logInfo.getData(colum)))
                                 m_strTagShow = m_strTagShow.replace("|" + (String)logInfo.getData(colum), "");
                             else if(m_strTagShow.contains((String)logInfo.getData(colum)))
@@ -144,7 +143,6 @@ public class LogTable extends JTable implements FocusListener, ActionListener
                         if(colum == LogFilterTableModel.COMUMN_TAG)
                         {
                             T.d();
-                            LogInfo logInfo = ((LogFilterTableModel)getModel()).getRow(row);
                             m_strTagRemove += "|" + (String)logInfo.getData(colum);
                             m_LogFilterMain.notiEvent(new INotiEvent.EventParam(INotiEvent.EVENT_CHANGE_FILTER_REMOVE_TAG));
                         }
@@ -152,12 +150,13 @@ public class LogTable extends JTable implements FocusListener, ActionListener
                     else
                     {
                         T.d();
-                        LogInfo logInfo = ((LogFilterTableModel)getModel()).getRow(row);
                         StringSelection data = new StringSelection((String)logInfo.getData(colum));
                         getToolkit();
                         Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
                         clipboard.setContents(data, data);
                     }
+                } else if (SwingUtilities.isMiddleMouseButton(e)) {
+                    m_LogFilterMain.gotoLine(logInfo.m_strLine);
                 }
             }
         });

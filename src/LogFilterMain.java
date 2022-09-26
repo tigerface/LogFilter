@@ -2168,7 +2168,7 @@ public class LogFilterMain extends JFrame implements INotiEvent
     public void gotoLine(String strLine) {
         int line = Integer.valueOf(strLine);
         tfGoto.setText(strLine);
-        Toast.showToast(LogFilterMain.this, C, "…Ë÷√–– ˝" + line);
+        Toast.showToast(LogFilterMain.this, C, "Goto Line:" + line);
     }
 }
 

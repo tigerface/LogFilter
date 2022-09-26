@@ -1,5 +1,6 @@
 import toast.Toast;
 import utils.OrderedProperties;
+import utils.StringUtil;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -1179,23 +1180,12 @@ public class LogFilterMain extends JFrame implements INotiEvent
 
             Set<Object> keys = p.keySet();
             for(Object key:keys) {
-                String strKeyString = getUTF8String((String) key);
-                final String command = getUTF8String(p.getProperty((String)key));
+                String strKeyString = StringUtil.getUTF8String((String) key);
+                final String command = StringUtil.getUTF8String(p.getProperty((String)key));
                 System.out.println("key:" + strKeyString + "|" + "value:" + command);
 
                 JMenuItem menu = new JMenuItem(strKeyString);
-                menu.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent event) {
-                        executor.execute(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                execute(command);
-                            }
-                        });
-
-                    }
-                });
+                menu.addActionListener(event -> executor.execute(() -> execute(command)));
                 commandMenu.add(menu);
             }
         } catch (Exception e) {
@@ -1203,15 +1193,6 @@ public class LogFilterMain extends JFrame implements INotiEvent
         }finally {
 
         }
-    }
-
-    private String getUTF8String(String value) {
-        try {
-            return new String(value.getBytes("ISO8859-1"), "utf-8");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return "unknow";
     }
 
     private String execute(String command) {
@@ -2169,6 +2150,12 @@ public class LogFilterMain extends JFrame implements INotiEvent
         int line = Integer.valueOf(strLine);
         tfGoto.setText(strLine);
         Toast.showToast(LogFilterMain.this, C, "Goto Line:" + line);
+    }
+
+    public void setPid(String pid) {
+        String oldPidString = m_tfShowPid.getText();
+        m_tfShowPid.setText(oldPidString +"|"+pid);
+        Toast.showToast(LogFilterMain.this, C, "Filter pid£º" + pid);
     }
 }
 

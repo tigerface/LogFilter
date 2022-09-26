@@ -1,32 +1,10 @@
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.Toolkit;
+import javax.swing.*;
+import javax.swing.table.*;
+import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.StringTokenizer;
-
-import javax.swing.JComponent;
-import javax.swing.JTable;
-import javax.swing.JViewport;
-import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableColumnModel;
-import javax.swing.table.JTableHeader;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
 
 public class LogTable extends JTable implements FocusListener, ActionListener
 {
@@ -136,31 +114,67 @@ public class LogTable extends JTable implements FocusListener, ActionListener
                 }
                 else if ( SwingUtilities.isRightMouseButton( e ))
                 {
-                    int colum = columnAtPoint(p);
-                    T.d("m_bAltPressed = " + m_bAltPressed);
-                    if(m_bAltPressed)
-                    {
-                        if(colum == LogFilterTableModel.COMUMN_TAG)
-                        {
-                            T.d();
-                            m_strTagRemove += "|" + (String)logInfo.getData(colum);
-                            m_LogFilterMain.notiEvent(new INotiEvent.EventParam(INotiEvent.EVENT_CHANGE_FILTER_REMOVE_TAG));
-                        }
-                    }
-                    else
-                    {
-                        T.d();
-                        StringSelection data = new StringSelection((String)logInfo.getData(colum));
-                        getToolkit();
-                        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-                        clipboard.setContents(data, data);
-                    }
+                    showDialog(e, logInfo);
                 } else if (SwingUtilities.isMiddleMouseButton(e)) {
                     m_LogFilterMain.gotoLine(logInfo.m_strLine);
                 }
             }
         });
         getTableHeader().addMouseListener(new ColumnHeaderListener());
+    }
+
+    private void showDialog(MouseEvent e, LogInfo logInfo) {
+        //弹出式菜单
+        JPopupMenu popup=new JPopupMenu();
+        //右键菜单
+        popup.add(createMenuItem(logInfo,e.getPoint(),  "gotoLine", "Goto this Line"));
+        popup.add(createMenuItem(logInfo,e.getPoint(),  "copyPid","add Pid filter"));
+        popup.add(createMenuItem(logInfo, e.getPoint(), "copyContent","copy content"));
+        popup.show(e.getComponent(), e.getX(), e.getY());
+    }
+
+    protected JMenuItem createMenuItem(LogInfo logInfo, Point p,String action,String text){
+        JMenuItem item=new JMenuItem(text);
+        item.setActionCommand(action);
+        item.addActionListener(new CustomActionListener(logInfo, p));
+        return item;
+    }
+
+    class CustomActionListener implements ActionListener{
+        LogInfo logInfo;
+        Point p;
+        public CustomActionListener(LogInfo logInfo,Point p) {
+            this.logInfo = logInfo;
+            this.p = p;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String action=e.getActionCommand();
+
+            int line =  Integer.valueOf(logInfo.m_strLine);
+            showRow(line);
+            changeSelection(line, 0, false, false);
+            if(action.equals("copyPid")){
+                m_LogFilterMain.setPid(logInfo.m_strPid);
+            }
+            if(action.equals("copyContent")){
+                copyContent(logInfo, p );
+            }
+            if(action.equals("gotoLine")) {
+                m_LogFilterMain.gotoLine(logInfo.m_strLine);
+            }
+        }
+    }
+
+    private void copyContent(LogInfo logInfo, Point p) {
+        int colum = columnAtPoint(p);
+        T.d("m_bAltPressed = " + m_bAltPressed);
+        T.d();
+        StringSelection data = new StringSelection((String) logInfo.getData(colum));
+        getToolkit();
+        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        clipboard.setContents(data, data);
     }
 
     public boolean isCellEditable(int row, int column)

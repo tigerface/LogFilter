@@ -1,4 +1,5 @@
 import toast.Toast;
+import utils.OrderedProperties;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -37,13 +38,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Properties;
-import java.util.StringTokenizer;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
@@ -206,6 +203,7 @@ public class LogFilterMain extends JFrame implements INotiEvent
     static RecentFileMenu     m_recentMenu;
 //    String                    m_strLastDir;
 
+    ExecutorService executor = Executors.newSingleThreadExecutor();
     public static void main(final String args[])
     {
         final LogFilterMain mainFrame = new LogFilterMain();
@@ -299,8 +297,13 @@ public class LogFilterMain extends JFrame implements INotiEvent
 
         file.add(fileOpen);
         file.add(m_recentMenu);
-
         menubar.add(file);
+
+        JMenu commandMenu = new JMenu("Command");
+        commandMenu.setMnemonic(KeyEvent.VK_C);
+        createCommandMenu(commandMenu);
+        menubar.add(commandMenu);
+
         setJMenuBar(menubar);
 
 
@@ -316,6 +319,7 @@ public class LogFilterMain extends JFrame implements INotiEvent
     final String INI_FILE           = "LogFilter.ini";
     final String INI_FILE_CMD       = "LogFilterCmd.ini";
     final String INI_FILE_COLOR     = "LogFilterColor.ini";
+    final String INI_CUSTOM_CMD = "CustomCmd.ini";
     final String INI_LAST_DIR       = "LAST_DIR";
     final String INI_CMD_COUNT      = "CMD_COUNT";
     final String INI_CMD            = "CMD_";
@@ -1165,6 +1169,84 @@ public class LogFilterMain extends JFrame implements INotiEvent
 
         m_strLogFileName = makeFilename();
 //        m_strProcessCmd     = ANDROID_DEFAULT_CMD + m_strLogFileName;
+    }
+
+    private void createCommandMenu(final JMenu commandMenu) {
+        try {
+
+            Properties p = new OrderedProperties();
+            p.load(new FileInputStream(INI_CUSTOM_CMD));
+
+            Set<Object> keys = p.keySet();
+            for(Object key:keys) {
+                String strKeyString = getUTF8String((String) key);
+                final String command = getUTF8String(p.getProperty((String)key));
+                System.out.println("key:" + strKeyString + "|" + "value:" + command);
+
+                JMenuItem menu = new JMenuItem(strKeyString);
+                menu.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent event) {
+                        executor.execute(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                execute(command);
+                            }
+                        });
+
+                    }
+                });
+                commandMenu.add(menu);
+            }
+        } catch (Exception e) {
+            System.out.println(e);
+        }finally {
+
+        }
+    }
+
+    private String getUTF8String(String value) {
+        try {
+            return new String(value.getBytes("ISO8859-1"), "utf-8");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "unknow";
+    }
+
+    private String execute(String command) {
+        System.out.println("execute custom command:" + command);
+        String resultString = "";
+        try {
+            String tmp;
+            StringBuffer successStr = new StringBuffer();
+            StringBuffer errorString = new StringBuffer();
+            Process oProcess = Runtime.getRuntime().exec(command);
+//
+            BufferedReader stdOut = new BufferedReader(new InputStreamReader(oProcess.getInputStream()));
+            BufferedReader stdError = new BufferedReader(new InputStreamReader(oProcess.getErrorStream()));
+
+            while ((tmp = stdOut.readLine()) != null) {
+                System.out.println("stdOut: " + tmp);
+                successStr.append(tmp+"</br>");
+            }
+            while ((tmp = stdError.readLine()) != null) {
+                System.out.println("stdError: " + successStr.append(tmp+"</br>"));
+                errorString.append(tmp+"</br>");
+            }
+            int resultCode = oProcess.exitValue();
+            System.out.println(successStr.toString() + "Exit Code: " + resultCode);
+            System.out.println(errorString.toString() + "Exit Code: " + resultCode);
+            if(errorString.length() > 0 ) {
+                resultString =  errorString.toString();
+            }else {
+                resultString =  " option success";
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Toast.showToast(LogFilterMain.this, C, command +resultString);
+        return resultString;
     }
 
     void parseFile(final File file)

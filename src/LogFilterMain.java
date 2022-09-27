@@ -1053,7 +1053,7 @@ public class LogFilterMain extends JFrame implements INotiEvent
             {
                 try
                 {
-                    int nIndex = Integer.parseInt(tfGoto.getText()) - 1;
+                    int nIndex = Integer.parseInt(tfGoto.getText());
                     m_tbLogTable.goToRow(nIndex);
                 }
                 catch(Exception err)

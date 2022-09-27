@@ -1,6 +1,19 @@
 # LogFilter
 Log filter for android
 Release Note 
+
+1、修改了Goto行数在筛选后定位不准的问题，比如选择pid后，再选行数，定位错误，修改为定位到最近的行数
+
+2、增加了command Menu菜单，可以在CustomCmd.ini这个文件中，自定义key（显示名字）=value(执行命令)
+
+3、按滚轮中键，可以直接输入Goto的行数，不用再手动输入了
+
+4、支持同时打开多个文件
+
+5、增加列表右键功能
+
+
+
 V1.9 functions:
 
 1. The problem of inaccurate positioning of Goto rows after filtering has been modified. <br>

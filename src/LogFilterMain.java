@@ -76,7 +76,7 @@ public class LogFilterMain extends JFrame implements INotiEvent
     private static final long serialVersionUID           = 1L;
     
     static final String       LOGFILTER                  = "LogFilter";
-    static final String       VERSION                    = "Version 1.8";
+    static final String       VERSION                    = "Version 1.9";
     final String              COMBO_ANDROID              = "Android          ";
     final String              COMBO_IOS                  = "ios";
     final String              COMBO_CUSTOM_COMMAND       = "custom command";
@@ -523,6 +523,11 @@ public class LogFilterMain extends JFrame implements INotiEvent
     {
         addDesc(VERSION);
         addDesc("");
+        addDesc("Version 1.9 : 1、修改了Goto行数在筛选后定位不准的问题，比如选择pid后，再选行数，定位错误，修改为定位到最近的行数");
+        addDesc("2、增加了command Menu菜单，可以在CustomCmd.ini这个文件中，自定义key（显示名字）=value(执行命令)");
+        addDesc("3、按滚轮中键，可以直接输入Goto的行数，不用再手动输入");
+        addDesc("4、支持同时打开多个文件");
+        addDesc("5、增加列表右键功能");
         addDesc("Version 1.8 : java -jar LogFilter_xx.jar [filename] 眠啊");
         addDesc("Version 1.7 : copy矫 焊捞绰 column父 clipboard俊 汗荤(Line 力寇)");
         addDesc("Version 1.6 : cmd霓焊冠胶 辨捞 绊沥");

@@ -642,18 +642,20 @@ public class LogTable extends JTable implements FocusListener, ActionListener
         }
     }
 
-    public void showRow(int row, boolean bCenter)
-    {
+    public void showRow(int row, boolean bCenter) {
+        T.d("row = " + row);
         int nLastSelectedIndex = getSelectedRow();
 
         changeSelection(row, 0, false, false);
         int nVisible = row;
-        if(nLastSelectedIndex <= row || nLastSelectedIndex == -1)
+        if (nLastSelectedIndex <= row || nLastSelectedIndex == -1)
             nVisible = row + getVisibleRowCount() / 2;
         else
             nVisible = row - getVisibleRowCount() / 2;
-        if(nVisible < 0) nVisible = 0;
-        else if(nVisible > getRowCount() - 1) nVisible = getRowCount() - 1;
+        if (nVisible < 0)
+            nVisible = 0;
+        else if (nVisible > getRowCount() - 1)
+            nVisible = getRowCount() - 1;
         showRow(nVisible);
     }
 

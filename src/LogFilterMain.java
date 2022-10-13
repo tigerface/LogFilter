@@ -62,19 +62,12 @@ import javax.swing.JToggleButton;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
-import javax.swing.event.CaretEvent;
-import javax.swing.event.CaretListener;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
+import javax.swing.event.*;
 
 public class LogFilterMain extends JFrame implements INotiEvent
 {
     private static final long serialVersionUID           = 1L;
-    
+
     static final String       LOGFILTER                  = "LogFilter";
     static final String       VERSION                    = "Version 1.9";
     final String              COMBO_ANDROID              = "Android          ";
@@ -92,24 +85,24 @@ public class LogFilterMain extends JFrame implements INotiEvent
     final String              ANDROID_SELECTED_CMD_FIRST = "adb -s ";
 //    final String              ANDROID_SELECTED_CMD_LAST  = " logcat -v time ";
     final String[]            DEVICES_CMD                = {"adb devices", "", ""};
-    
+
     static final int          DEFAULT_WIDTH              = 1200;
     static final int          DEFAULT_HEIGHT             = 720;
     static final int          MIN_WIDTH                  = 1100;
     static final int          MIN_HEIGHT                 = 500;
-    
+
     static final int          DEVICES_ANDROID            = 0;
     static final int          DEVICES_IOS                = 1;
     static final int          DEVICES_CUSTOM             = 2;
-    
+
     static final int          STATUS_CHANGE              = 1;
     static final int          STATUS_PARSING             = 2;
     static final int          STATUS_READY               = 4;
-    
+
     final int                 L                          = SwingConstants.LEFT;
     final int                 C                          = SwingConstants.CENTER;
     final int                 R                          = SwingConstants.RIGHT;
-    
+
     JTabbedPane               m_tpTab;
     JTextField                m_tfStatus;
     IndicatorPanel            m_ipIndicator;
@@ -128,7 +121,7 @@ public class LogFilterMain extends JFrame implements INotiEvent
     LogFilterTableModel       m_tmLogTableModel;
 //    TagFilterTableModel         m_tmTagTableModel;
     boolean                   m_bUserFilter;
-    
+
     //Word Filter, tag filter
     JTextField                m_tfHighlight;
     JTextField                m_tfFindWord;
@@ -137,7 +130,7 @@ public class LogFilterMain extends JFrame implements INotiEvent
     JTextField                m_tfRemoveTag;
     JTextField                m_tfShowPid;
     JTextField                m_tfShowTid;
-    
+
     //Device
     JButton                   m_btnDevice;
     JList                     m_lDeviceList;
@@ -161,7 +154,7 @@ public class LogFilterMain extends JFrame implements INotiEvent
     JCheckBox                 m_chkWarn;
     JCheckBox                 m_chkError;
     JCheckBox                 m_chkFatal;
-    
+
     //Show column
     JCheckBox                 m_chkClmBookmark;
     JCheckBox                 m_chkClmLine;
@@ -172,7 +165,7 @@ public class LogFilterMain extends JFrame implements INotiEvent
     JCheckBox                 m_chkClmThread;
     JCheckBox                 m_chkClmTag;
     JCheckBox                 m_chkClmMessage;
-    
+
     JTextField                m_tfFontSize;
 //    JTextField                  m_tfProcessCmd;
     JComboBox                 m_comboEncode;
@@ -182,7 +175,7 @@ public class LogFilterMain extends JFrame implements INotiEvent
     JButton                   m_btnClear;
     JToggleButton             m_tbtnPause;
     JButton                   m_btnStop;
-    
+
     String                    m_strLogFileName;
     String                    m_strSelectedDevice;
 //    String                      m_strProcessCmd;
@@ -191,7 +184,7 @@ public class LogFilterMain extends JFrame implements INotiEvent
     Thread                    m_thWatchFile;
     Thread                    m_thFilterParse;
     boolean                   m_bPauseADB;
-    
+
     Object                    FILE_LOCK;
     Object                    FILTER_LOCK;
     volatile int              m_nChangedFilter;
@@ -224,7 +217,7 @@ public class LogFilterMain extends JFrame implements INotiEvent
         SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd_HHmmss");
         return "LogFilter_" + format.format(now) + ".txt";
     }
-    
+
     void exit()
     {
         if(m_Process != null) m_Process.destroy();
@@ -300,10 +293,10 @@ public class LogFilterMain extends JFrame implements INotiEvent
         file.add(m_recentMenu);
         menubar.add(file);
 
-        JMenu commandMenu = new JMenu("Command");
-        commandMenu.setMnemonic(KeyEvent.VK_C);
-        createCommandMenu(commandMenu);
-        menubar.add(commandMenu);
+
+        createCommandMenu(menubar);
+        createMoreCommandMenu(menubar);
+
 
         setJMenuBar(menubar);
 
@@ -321,6 +314,7 @@ public class LogFilterMain extends JFrame implements INotiEvent
     final String INI_FILE_CMD       = "LogFilterCmd.ini";
     final String INI_FILE_COLOR     = "LogFilterColor.ini";
     final String INI_CUSTOM_CMD = "CustomCmd.ini";
+    final String INI_MORE_CUSTOM_CMD = "CustomMenuCmd.ini";
     final String INI_LAST_DIR       = "LAST_DIR";
     final String INI_CMD_COUNT      = "CMD_COUNT";
     final String INI_CMD            = "CMD_";
@@ -348,16 +342,16 @@ public class LogFilterMain extends JFrame implements INotiEvent
     final String INI_WINDOW_STATE   = "INI_WINDOW_STATE";
 
     final String INI_COMUMN         = "INI_COMUMN_";
-    
+
     void loadCmd()
     {
         try
         {
             Properties p = new Properties();
-            
+
             // ini 파일 읽기
             p.load(new FileInputStream(INI_FILE_CMD));
-            
+
             T.d("p.getProperty(INI_CMD_COUNT) = " + p.getProperty(INI_CMD_COUNT));
             int nCount = Integer.parseInt(p.getProperty(INI_CMD_COUNT));
             T.d("nCount = " + nCount);
@@ -372,15 +366,15 @@ public class LogFilterMain extends JFrame implements INotiEvent
             System.out.println(e);
         }
     }
-    
+
     void loadColor()
     {
         try
         {
             Properties p = new Properties();
-            
+
             p.load(new FileInputStream(INI_FILE_COLOR));
-            
+
             LogColor.COLOR_0 = Integer.parseInt(p.getProperty(INI_COLOR_0).replace("0x", ""), 16);
             LogColor.COLOR_1 = Integer.parseInt(p.getProperty(INI_COLOR_1).replace("0x", ""), 16);
             LogColor.COLOR_2 = Integer.parseInt(p.getProperty(INI_COLOR_2).replace("0x", ""), 16);
@@ -390,7 +384,7 @@ public class LogFilterMain extends JFrame implements INotiEvent
             LogColor.COLOR_INFO  = LogColor.COLOR_6 = Integer.parseInt(p.getProperty(INI_COLOR_6).replace("0x", ""), 16);
             LogColor.COLOR_DEBUG = LogColor.COLOR_7 = Integer.parseInt(p.getProperty(INI_COLOR_7).replace("0x", ""), 16);
             LogColor.COLOR_FATAL = LogColor.COLOR_8 = Integer.parseInt(p.getProperty(INI_COLOR_8).replace("0x", ""), 16);
-            
+
             int nCount = Integer.parseInt(p.getProperty( INI_HIGILIGHT_COUNT, "0" ));
             if(nCount > 0)
             {
@@ -409,7 +403,7 @@ public class LogFilterMain extends JFrame implements INotiEvent
             System.out.println(e);
         }
     }
-    
+
     void saveColor()
     {
         try
@@ -440,16 +434,16 @@ public class LogFilterMain extends JFrame implements INotiEvent
             e.printStackTrace();
         }
     }
-    
+
     void loadFilter()
     {
         try
         {
             Properties p = new Properties();
-            
+
             // ini 파일 읽기
             p.load(new FileInputStream(INI_FILE));
-            
+
             // Key 값 읽기
             String strFontType = p.getProperty(INI_FONT_TYPE);
             if(strFontType != null && strFontType.length() > 0)
@@ -464,7 +458,7 @@ public class LogFilterMain extends JFrame implements INotiEvent
             m_nWinWidth  = Integer.parseInt( p.getProperty( INI_WIDTH ));
             m_nWinHeight = Integer.parseInt( p.getProperty( INI_HEIGHT ));
             m_nWindState = Integer.parseInt( p.getProperty( INI_WINDOW_STATE ));
-            
+
             for(int nIndex = 0; nIndex < LogFilterTableModel.COMUMN_MAX; nIndex++)
             {
                 LogFilterTableModel.setColumnWidth( nIndex, Integer.parseInt( p.getProperty( INI_COMUMN + nIndex) ) );
@@ -475,7 +469,7 @@ public class LogFilterMain extends JFrame implements INotiEvent
             System.out.println(e);
         }
     }
-    
+
     void saveFilter()
     {
         try
@@ -484,7 +478,7 @@ public class LogFilterMain extends JFrame implements INotiEvent
             m_nWinHeight = m_nLastHeight;
             m_nWindState = getExtendedState();
             T.d("m_nWindState = " + m_nWindState);
-            
+
             Properties p = new Properties();
 //            p.setProperty( INI_LAST_DIR, m_strLastDir );
             p.setProperty(INI_FONT_TYPE,   (String)m_jcFontType.getSelectedItem());
@@ -510,7 +504,7 @@ public class LogFilterMain extends JFrame implements INotiEvent
             e.printStackTrace();
         }
     }
-    
+
     void addDesc(String strMessage)
     {
         LogInfo logInfo = new LogInfo();
@@ -1177,9 +1171,10 @@ public class LogFilterMain extends JFrame implements INotiEvent
 //        m_strProcessCmd     = ANDROID_DEFAULT_CMD + m_strLogFileName;
     }
 
-    private void createCommandMenu(final JMenu commandMenu) {
+    private void createCommandMenu(final JMenuBar menubar) {
+        JMenu commandMenu = new JMenu("Command");
+        commandMenu.setMnemonic(KeyEvent.VK_C);
         try {
-
             Properties p = new OrderedProperties();
             p.load(new FileInputStream(INI_CUSTOM_CMD));
 
@@ -1196,7 +1191,41 @@ public class LogFilterMain extends JFrame implements INotiEvent
         } catch (Exception e) {
             System.out.println(e);
         }finally {
+            menubar.add(commandMenu);
+        }
+    }
 
+    private void createMoreCommandMenu(final JMenuBar menubar) {
+        try {
+            Properties p = new OrderedProperties();
+            p.load(new FileInputStream(INI_MORE_CUSTOM_CMD));
+
+            Set<Object> keys = p.keySet();
+            for(Object key : keys) {
+                String strKeyString = StringUtil.getUTF8String((String) key);
+                JMenu commandMenu = new JMenu(strKeyString);
+                final String command = StringUtil.getUTF8String(p.getProperty((String)key));
+                System.out.println("menubar key:" + strKeyString + "|" + "value:" + command);
+                commandMenu.addMenuListener(new MenuListener() {
+                    @Override
+                    public void menuSelected(MenuEvent e) {
+                        executor.execute(() -> execute(command));
+                    }
+
+                    @Override
+                    public void menuDeselected(MenuEvent e) {
+
+                    }
+
+                    @Override
+                    public void menuCanceled(MenuEvent e) {
+
+                    }
+                });
+                menubar.add(commandMenu);;
+            }
+        } catch (Exception e) {
+            System.out.println(e);
         }
     }
 
@@ -1236,10 +1265,10 @@ public class LogFilterMain extends JFrame implements INotiEvent
     }
 
     void parseFile(File file) {
-        parseFile(file, 0);
+        parseFile(file, 0, 1);
     }
 
-    void parseFile(final File file, final int index)
+    void parseFile(final File file, final int index, final int total)
     {
         if(file == null)
         {
@@ -1274,7 +1303,7 @@ public class LogFilterMain extends JFrame implements INotiEvent
 
                     String strLine;
 
-                    setStatus("Parsing");
+                    setStatus("Parsing "+(index + 1)+" ->, total:" + total);
 
                     if(index == 0) {
                         clearData();
@@ -1290,7 +1319,9 @@ public class LogFilterMain extends JFrame implements INotiEvent
                         }
                     }
                     runFilter();
-                    setStatus("Parse complete");
+                    if(index == total +1){
+                        setStatus("Parse complete");
+                    }
                 } catch(Exception ioe) {
                     T.e(ioe);
                 }
@@ -1400,7 +1431,7 @@ public class LogFilterMain extends JFrame implements INotiEvent
                         setTitle(file.getPath());
 
                         stopProcess();
-                        parseFile(file, i);
+                        parseFile(file, i, size);
                     }
                 }
                 catch(Exception e)
@@ -1974,7 +2005,7 @@ public class LogFilterMain extends JFrame implements INotiEvent
             else if(e.getSource().equals(m_jcFontType))
             {
                 T.d("font = " + m_tbLogTable.getFont());
-                
+
                 m_tbLogTable.setFont(new Font((String)m_jcFontType.getSelectedItem(), Font.PLAIN, 12));
                 m_tbLogTable.setFontSize(Integer.parseInt(m_tfFontSize.getText()));
             }
@@ -2139,10 +2170,10 @@ public class LogFilterMain extends JFrame implements INotiEvent
                 useFilter(check);
         }
     };
-    
+
     public void openFileBrowser()
     {
-        FileDialog fd = new FileDialog(this, "File open", FileDialog.LOAD); 
+        FileDialog fd = new FileDialog(this, "File open", FileDialog.LOAD);
 //        fd.setDirectory( m_strLastDir );
         fd.setVisible( true );
         if (fd.getFile() != null)
